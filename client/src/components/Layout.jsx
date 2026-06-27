@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar.jsx';
+import AccessibilityControls from './AccessibilityControls.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { adminApi } from '../api/client.js';
 
@@ -27,8 +28,10 @@ export default function Layout() {
             </button>
             {isLDRRMO && <span className="badge bg-danger d-none d-md-inline">Incident Response Active</span>}
           </div>
-          <div className="dropdown user-dropdown">
-            <button className="user-menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
+          <div className="d-flex align-items-center gap-2">
+            <AccessibilityControls />
+            <div className="dropdown user-dropdown">
+              <button className="user-menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
               <img
                 src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=1e40af&color=fff`}
                 alt=""
@@ -68,6 +71,7 @@ export default function Layout() {
               </li>
             </ul>
             )}
+            </div>
           </div>
         </header>
         <main className="page-content">
