@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EvacHub — LGU Evacuation Center Management</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Login -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <div class="login-brand">
+        <i class="bi bi-shield-exclamation"></i>
+        <h1>EvacHub</h1>
+        <p>LGU Evacuation Center Management &amp; Decision Support</p>
+      </div>
+
+      <div class="limitation-banner">
+        <i class="bi bi-info-circle"></i>
+        Decision-support tool for local disaster response. Does not replace official ICS procedures or LDRRMO authority.
+      </div>
+
+      <div class="login-tabs" role="tablist">
+        <button type="button" class="login-tab active" data-mode="login" role="tab" aria-selected="true">Sign In</button>
+        <button type="button" class="login-tab" data-mode="register" role="tab" aria-selected="false">Create Account</button>
+      </div>
+
+      <form id="loginForm" class="login-form">
+        <div class="mb-3">
+          <label for="loginUsername" class="form-label">Username</label>
+          <input type="text" id="loginUsername" class="form-control" placeholder="Enter username" autocomplete="username" maxlength="24" required>
+        </div>
+        <div class="mb-3">
+          <label for="loginPassword" class="form-label">Password</label>
+          <div class="password-field">
+            <input type="password" id="loginPassword" class="form-control" placeholder="At least 4 characters" autocomplete="current-password" minlength="4" required>
+            <button type="button" id="togglePassword" class="password-toggle" aria-label="Show password">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+        </div>
+        <div class="form-check mb-3" id="loginRememberRow">
+          <input type="checkbox" class="form-check-input" id="loginRemember">
+          <label class="form-check-label" for="loginRemember">Remember me on this device</label>
+        </div>
+        <p id="loginError" class="login-error" role="alert" hidden></p>
+        <button type="submit" class="btn btn-primary w-100" id="loginSubmit">
+          <i class="bi bi-box-arrow-in-right"></i> Sign In
+        </button>
+      </form>
+
+      <div class="login-demo">
+        <p class="login-demo-title">Demo accounts (Sign In tab)</p>
+        <ul>
+          <li><code>ldrrmo</code> / <code>ldrrmo123</code> — LDRRMO Officer (full dashboard)</li>
+          <li><code>coordinator1</code> / <code>coord123</code> — San Jose Covered Court</li>
+          <li><code>campmgr</code> / <code>camp123</code> — Municipal Gymnasium</li>
+          <li><code>coordinator2</code> / <code>coord123</code> — Elementary School Hall</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- App -->
+  <div id="appRoot" hidden>
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-brand">
+        <i class="bi bi-shield-exclamation"></i>
+        <div>
+          EvacHub
+          <small>LGU Disaster Response</small>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button type="button" class="nav-link" data-view="dashboard" data-ldrrmo-only>
+          <i class="bi bi-speedometer2"></i>
+          <span>LDRRMO Dashboard</span>
+        </button>
+        <button type="button" class="nav-link" data-view="overview" data-field-only>
+          <i class="bi bi-house-heart"></i>
+          <span>My Center</span>
+        </button>
+        <button type="button" class="nav-link" data-view="centers">
+          <i class="bi bi-building"></i>
+          <span>Evacuation Centers</span>
+        </button>
+        <button type="button" class="nav-link" data-view="resources">
+          <i class="bi bi-box-seam"></i>
+          <span>Resource Monitoring</span>
+        </button>
+        <button type="button" class="nav-link" data-view="requests">
+          <i class="bi bi-send"></i>
+          <span>Resource Requests</span>
+        </button>
+        <button type="button" class="nav-link" data-view="logs">
+          <i class="bi bi-journal-text"></i>
+          <span>Activity Logs</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <p class="text-muted px-3 mb-0" style="font-size:0.6875rem;color:#64748b!important">
+          ICS-aligned documentation · LGU-level operations
+        </p>
+      </div>
+    </aside>
+
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <div class="main-wrapper">
+      <header class="navbar-top">
+        <div class="d-flex align-items-center gap-3">
+          <button id="sidebarToggle" class="btn-icon" aria-label="Toggle sidebar">
+            <i class="bi bi-list"></i>
+          </button>
+          <span class="badge bg-danger d-none d-md-inline" data-ldrrmo-only>Incident Response Active</span>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+          <button class="btn-icon position-relative" aria-label="Alerts" data-ldrrmo-only>
+            <i class="bi bi-bell"></i>
+            <span id="alertBadge" class="notification-badge" hidden>0</span>
+          </button>
+          <div class="dropdown">
+            <button class="user-menu" data-bs-toggle="dropdown" aria-expanded="false">
+              <img src="" alt="" class="avatar" data-user-avatar>
+              <span class="d-none d-sm-inline" data-user-name>User</span>
+              <i class="bi bi-chevron-down text-muted"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li class="dropdown-header">
+                <span data-user-name>User</span><br>
+                <small class="text-muted" data-user-role>Role</small>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="#" id="resetDataBtn"><i class="bi bi-arrow-counterclockwise"></i> Reset Demo Data</a></li>
+              <li><a class="dropdown-item" href="#" id="logoutBtn"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+            </ul>
+          </div>
+        </div>
+      </header>
+
+      <main class="page-content">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title" id="pageTitle">Dashboard</h1>
+            <p class="page-subtitle" id="pageSubtitle">Loading…</p>
+          </div>
+          <button class="btn btn-primary" id="headerAction" hidden>
+            <i class="bi bi-plus-lg"></i> Action
+          </button>
+        </div>
+
+        <!-- D: LDRRMO Decision Support Dashboard -->
+        <section id="view-dashboard" class="view-section">
+          <div class="stats-grid">
+            <article class="stat-card">
+              <p class="stat-label">Active Centers</p>
+              <h2 id="statCenters">0</h2>
+            </article>
+            <article class="stat-card">
+              <p class="stat-label">Total Evacuees</p>
+              <h2 id="statEvacuees">0</h2>
+            </article>
+            <article class="stat-card">
+              <p class="stat-label">Vulnerable Population</p>
+              <h2 id="statVulnerable">0</h2>
+            </article>
+            <article class="stat-card">
+              <p class="stat-label">Pending Requests</p>
+              <h2 id="statPending">0</h2>
+            </article>
+            <article class="stat-card stat-warning">
+              <p class="stat-label">Urgent Requests</p>
+              <h2 class="stat-value" id="statUrgent">0</h2>
+            </article>
+            <article class="stat-card stat-danger">
+              <p class="stat-label">Critical Shortages</p>
+              <h2 id="statCritical">0</h2>
+            </article>
+          </div>
+
+          <div class="dashboard-grid">
+            <div class="card-panel">
+              <div class="panel-header">
+                <h3><i class="bi bi-exclamation-octagon text-danger"></i> Critical Shortage Alerts</h3>
+              </div>
+              <div id="criticalAlertsList"></div>
+            </div>
+
+            <div class="card-panel">
+              <div class="panel-header">
+                <h3><i class="bi bi-inbox"></i> Pending Resource Requests</h3>
+              </div>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Center</th>
+                      <th>Resource</th>
+                      <th>Priority</th>
+                      <th>Submitted</th>
+                      <th>Status</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="pendingRequestsTable"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-panel mt-3">
+            <div class="panel-header">
+              <h3><i class="bi bi-sort-numeric-down"></i> Priority Rankings</h3>
+              <small class="text-muted">Based on evacuees, critical shortages, vulnerable populations, and pending requests</small>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Center</th>
+                    <th>Evacuees</th>
+                    <th>Vulnerable</th>
+                    <th>Critical</th>
+                    <th>Requests</th>
+                    <th>Level</th>
+                    <th>Score</th>
+                    <th>Factors</th>
+                  </tr>
+                </thead>
+                <tbody id="priorityRankings"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card-panel">
+            <div class="panel-header">
+              <h3><i class="bi bi-grid"></i> Resource Status Overview</h3>
+            </div>
+            <div id="resourceOverviewGrid" class="resource-overview-grid"></div>
+          </div>
+
+          <div class="card-panel">
+            <div class="panel-header">
+              <h3><i class="bi bi-clock-history"></i> Request History</h3>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Center</th>
+                    <th>Resource</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Submitted</th>
+                    <th>Reviewed By</th>
+                  </tr>
+                </thead>
+                <tbody id="requestHistoryTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Field staff overview -->
+        <section id="view-overview" class="view-section">
+          <div id="overviewContent"></div>
+        </section>
+
+        <!-- A: Evacuation Center Management -->
+        <section id="view-centers" class="view-section">
+          <div class="filter-bar">
+            <input type="search" id="centerSearch" class="form-control" placeholder="Search centers…">
+          </div>
+          <div class="card-panel">
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Center</th>
+                    <th>Barangay</th>
+                    <th>Evacuees</th>
+                    <th>Occupancy</th>
+                    <th>Coordinator</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="centersTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- B: Emergency Resource Monitoring -->
+        <section id="view-resources" class="view-section">
+          <p class="ics-note">
+            <i class="bi bi-info-circle"></i>
+            Update resource status when inventory changes. Status levels: <strong>Sufficient</strong>, <strong>Low Stock</strong>, or <strong>Critical</strong>.
+          </p>
+          <div id="resourcesGrid" class="resources-grid"></div>
+        </section>
+
+        <!-- C: Resource Request Management -->
+        <section id="view-requests" class="view-section">
+          <div class="filter-bar">
+            <select id="requestStatusFilter" class="form-select">
+              <option value="all">All statuses</option>
+              <option value="pending">Pending</option>
+              <option value="under_review">Under Review</option>
+              <option value="approved">Approved</option>
+              <option value="fulfilled">Fulfilled</option>
+              <option value="denied">Denied</option>
+            </select>
+          </div>
+          <div class="card-panel">
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Center</th>
+                    <th>Resource</th>
+                    <th>Priority</th>
+                    <th>Reason</th>
+                    <th>Submitted</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="requestsTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- E: Activity and Inventory Logs -->
+        <section id="view-logs" class="view-section">
+          <p class="ics-note">
+            <i class="bi bi-journal-check"></i>
+            Activity log for accountability and ICS documentation. Records inventory updates, resource requests, and status changes.
+          </p>
+          <div class="filter-bar">
+            <select id="logFilter" class="form-select">
+              <option value="all">All activities</option>
+              <option value="center_created">Center registered</option>
+              <option value="center_updated">Center updated</option>
+              <option value="evacuees_updated">Evacuee count updated</option>
+              <option value="resource_updated">Resource updated</option>
+              <option value="request_submitted">Request submitted</option>
+              <option value="request_status_changed">Request status changed</option>
+            </select>
+          </div>
+          <div class="card-panel">
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Reference</th>
+                    <th>Details</th>
+                  </tr>
+                </thead>
+                <tbody id="logsTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Modal: Register/Edit Center -->
+  <div class="modal fade" id="centerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="centerForm">
+          <div class="modal-header">
+            <h5 class="modal-title" id="centerModalTitle">Register Evacuation Center</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="centerFormId">
+            <div class="mb-3">
+              <label for="centerName" class="form-label">Center Name</label>
+              <input type="text" id="centerName" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label for="centerAddress" class="form-label">Address</label>
+              <input type="text" id="centerAddress" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label for="centerBarangay" class="form-label">Barangay</label>
+              <input type="text" id="centerBarangay" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label for="centerCapacity" class="form-label">Capacity</label>
+              <input type="number" id="centerCapacity" class="form-control" min="1" required>
+            </div>
+            <div class="mb-3">
+              <label for="centerCoordinator" class="form-label">Coordinator Name</label>
+              <input type="text" id="centerCoordinator" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label for="centerContact" class="form-label">Contact Number</label>
+              <input type="text" id="centerContact" class="form-control" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Center</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Evacuee Count -->
+  <div class="modal fade" id="evacueeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="evacueeForm">
+          <div class="modal-header">
+            <h5 class="modal-title" id="evacueeModalTitle">Update Evacuee Count</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="evacueeCenterId">
+            <div class="mb-3">
+              <label for="evacTotal" class="form-label">Total Evacuees</label>
+              <input type="number" id="evacTotal" class="form-control" min="0" required>
+            </div>
+            <p class="text-muted small">Vulnerable populations</p>
+            <div class="row g-2">
+              <div class="col-6">
+                <label for="evacChildren" class="form-label">Children</label>
+                <input type="number" id="evacChildren" class="form-control" min="0" value="0">
+              </div>
+              <div class="col-6">
+                <label for="evacSeniors" class="form-label">Senior Citizens</label>
+                <input type="number" id="evacSeniors" class="form-control" min="0" value="0">
+              </div>
+              <div class="col-6">
+                <label for="evacPregnant" class="form-label">Pregnant Women</label>
+                <input type="number" id="evacPregnant" class="form-control" min="0" value="0">
+              </div>
+              <div class="col-6">
+                <label for="evacPwd" class="form-label">Persons with Disabilities</label>
+                <input type="number" id="evacPwd" class="form-control" min="0" value="0">
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Count</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Resource Status -->
+  <div class="modal fade" id="resourceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="resourceForm">
+          <div class="modal-header">
+            <h5 class="modal-title" id="resourceModalTitle">Update Resource Status</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" id="resourceStatusFields"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Status</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: New Request -->
+  <div class="modal fade" id="requestModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="requestForm">
+          <div class="modal-header">
+            <h5 class="modal-title">Submit Resource Request</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="requestCenter" class="form-label">Evacuation Center</label>
+              <select id="requestCenter" class="form-select" required></select>
+            </div>
+            <div class="mb-3">
+              <label for="requestResource" class="form-label">Requested Resource</label>
+              <select id="requestResource" class="form-select" required>
+                <option value="food">Food</option>
+                <option value="water">Drinking Water</option>
+                <option value="medicines">Medicines</option>
+                <option value="hygiene_kits">Hygiene Kits</option>
+                <option value="sleeping_kits">Sleeping Kits</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="requestPriority" class="form-label">Priority Level</label>
+              <select id="requestPriority" class="form-select" required>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="requestReason" class="form-label">Reason for Request</label>
+              <textarea id="requestReason" class="form-control" rows="3" required placeholder="Describe the shortage and immediate need…"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Submit Request</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Review Request (LDRRMO) -->
+  <div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="reviewForm">
+          <div class="modal-header">
+            <h5 class="modal-title">Review Resource Request</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="reviewRequestId">
+            <div id="reviewDetails" class="mb-3"></div>
+            <div class="mb-3">
+              <label for="reviewStatus" class="form-label">Update Status</label>
+              <select id="reviewStatus" class="form-select" required>
+                <option value="under_review">Under Review</option>
+                <option value="approved">Approved</option>
+                <option value="fulfilled">Fulfilled</option>
+                <option value="denied">Denied</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="reviewNotes" class="form-label">Notes / Documentation</label>
+              <textarea id="reviewNotes" class="form-control" rows="2" placeholder="Coordination notes, delivery schedule, etc."></textarea>
+            </div>
+            <p class="text-muted small mb-0">
+              Final approval and resource augmentation follow existing LGU and ICS procedures.
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Update Status</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+  <script>
+    window.addEventListener('load', function () {
+      setTimeout(function () {
+        if (window.__evachubReady) return;
+        var err = document.getElementById('loginError');
+        if (err) {
+          err.hidden = false;
+          err.textContent = 'App failed to load. Run "npx serve ." in the evac-system folder and open http://localhost:3000 — do not open index.html directly.';
+        }
+      }, 1500);
+    });
+  </script>
+</body>
+</html>
