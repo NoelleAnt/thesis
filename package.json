@@ -1,0 +1,15 @@
+{
+  "name": "asap-agap",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Asap-Agap: Web-Based Decision Support System for LGU Evacuation Centers",
+  "scripts": {
+    "install:all": "npm install --prefix server && npm install --prefix client",
+    "db:init": "npm run db:init --prefix server",
+    "db:seed": "npm run db:seed --prefix server",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "build": "npm run build --prefix client",
+    "start": "npm run start --prefix server"
+  }
+}
