@@ -26,7 +26,18 @@ This installs dependencies for both `server/` and `client/`.
 
 ## Step 3 — Configure MySQL
 
-1. Ensure MySQL is running.
+The project supports either:
+- a local MySQL server, or
+- a Docker-based MySQL container started from the repository root.
+
+### Option A — Docker (recommended)
+
+1. Start the MySQL container:
+
+   ```bash
+   docker compose up -d mysql
+   ```
+
 2. Copy the example environment file:
 
    **Windows (PowerShell):**
@@ -39,13 +50,19 @@ This installs dependencies for both `server/` and `client/`.
    cp server/.env.example server/.env
    ```
 
-3. Edit `server/.env`:
+3. Keep the default values in `server/.env` unless you changed the container credentials.
+
+### Option B — Local MySQL server
+
+1. Ensure MySQL is running.
+2. Copy the example environment file and update the credentials to match your local installation.
+3. Edit `server/.env` if needed:
 
    ```env
    PORT=5000
    CLIENT_ORIGIN=http://localhost:5173
 
-   DB_HOST=localhost
+   DB_HOST=127.0.0.1
    DB_PORT=3306
    DB_USER=root
    DB_PASSWORD=your_mysql_password
@@ -114,10 +131,11 @@ Use a demo account from the login screen, for example:
 
 | Issue | Solution |
 |-------|----------|
-| `ECONNREFUSED` to MySQL | Start MySQL and verify credentials in `server/.env` |
-| `Access denied for user` | Check `DB_USER` and `DB_PASSWORD` |
+| `ECONNREFUSED` to MySQL | Start MySQL or run `docker compose up -d mysql`, then verify credentials in `server/.env` |
+| `Access denied for user` | Check `DB_USER` and `DB_PASSWORD`; the Docker setup uses `root/rootpassword` by default |
 | Blank page after login | Ensure the API server is running on port 5000 |
 | 401 on API calls | Log out and sign in again; token may have expired |
+| `Unknown database` | Run `npm run db:init` after the database is reachable |
 
 ## Legacy prototype
 

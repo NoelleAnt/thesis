@@ -39,11 +39,16 @@ npm run install:all
 
 ### 2. Configure the database
 
-Copy the server environment file and edit your MySQL credentials:
+The project can use either a local MySQL server or a Docker container.
+
+For Docker:
 
 ```bash
+docker compose up -d mysql
 copy server\.env.example server\.env
 ```
+
+For a local MySQL installation, update the credentials in `server/.env` to match your setup.
 
 ### 3. Initialize and seed MySQL
 
